@@ -102,3 +102,21 @@ const pollutedMessages = [
   "The cave tricked you. Avoid the dark water.",
   "Wrong echo... that was polluted."
 ];
+
+// Score display
+const currentCansDisplay = document.getElementById("current-cans");
+
+// Timer display
+const timerDisplay = document.getElementById("timer");
+
+// Message display
+const messageDisplay = document.getElementById("achievements");
+
+// Start button
+const startButton = document.getElementById("start-game");
+
+// Reset button
+const resetButton = document.getElementById("reset-game");
+
+// Game grid area
+const grid = document.querySelector(".game-grid");
