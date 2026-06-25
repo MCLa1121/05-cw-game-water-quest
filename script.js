@@ -52,3 +52,23 @@
 
 // // Set up click handler for the start button
 // document.getElementById('start-game').addEventListener('click', startGame);
+
+//game setting 
+const GOAL_CANS = 20;
+const TIME_LIMIT = 30;
+
+//varialbe that will change during the game process 
+// Tracks how many jerry cans the player collected
+let currentCans = 0;
+
+// Tracks how much time is left
+let timeLeft = TIME_LIMIT;
+
+// Tracks whether the game is currently active
+let gameActive = false;
+
+// Stores the interval that spawns items
+let spawnInterval;
+
+// Stores the interval that controls the timer
+let timerInterval;
