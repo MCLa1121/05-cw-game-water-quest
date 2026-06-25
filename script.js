@@ -4,46 +4,7 @@
 // let gameActive = false;      // Tracks if game is currently running
 // let spawnInterval;          // Holds the interval for spawning items
 
-// // Creates the 3x3 game grid where items will appear
-// function createGrid() {
-//   const grid = document.querySelector('.game-grid');
-//   grid.innerHTML = ''; // Clear any existing grid cells
-//   for (let i = 0; i < 9; i++) {
-//     const cell = document.createElement('div');
-//     cell.className = 'grid-cell'; // Each cell represents a grid square
-//     grid.appendChild(cell);
-//   }
-// }
 
-// // Ensure the grid is created when the page loads
-// createGrid();
-
-// // Spawns a new item in a random grid cell
-// function spawnWaterCan() {
-//   if (!gameActive) return; // Stop if the game is not active
-//   const cells = document.querySelectorAll('.grid-cell');
-  
-//   // Clear all cells before spawning a new water can
-//   cells.forEach(cell => (cell.innerHTML = ''));
-
-//   // Select a random cell from the grid to place the water can
-//   const randomCell = cells[Math.floor(Math.random() * cells.length)];
-
-//   // Use a template literal to create the wrapper and water-can element
-//   randomCell.innerHTML = `
-//     <div class="water-can-wrapper">
-//       <div class="water-can"></div>
-//     </div>
-//   `;
-// }
-
-// // Initializes and starts a new game
-// function startGame() {
-//   if (gameActive) return; // Prevent starting a new game if one is already active
-//   gameActive = true;
-//   createGrid(); // Set up the game grid
-//   spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
-// }
 
 // function endGame() {
 //   gameActive = false; // Mark the game as inactive
@@ -132,6 +93,9 @@ function createGrid() {
   }
 }
 
+// Ensure the grid is created when the page loads
+createGrid();
+
 function getRandomMessage(messages) {
   // Pick a random index number from the array
   const randomIndex = Math.floor(Math.random() * messages.length);
@@ -157,4 +121,115 @@ function showMessage(text, type) {
   else if (type === "danger") {
     messageDisplay.classList.add("danger");
   }
+}
+
+// Spawns a new item in a random grid cell
+function spawnItem() {
+  if (!gameActive) return; // Stop if the game is not active
+  const cells = document.querySelectorAll('.grid-cell');
+  
+  // Clear all cells before spawning a new water can
+  cells.forEach(cell => (cell.innerHTML = ''));
+
+  // Select a random cell from the grid to place the water can
+  const randomCell = cells[Math.floor(Math.random() * cells.length)];
+
+  // 75% chance to spawn a jerry can
+  // 25% chance to spawn polluted water
+  const itemType = Math.random() < 0.75 ? "can" : "polluted";
+
+
+ 
+  // If the random item is a yellow jerry can
+  if (itemType === "can") {
+    // Create a wrapper for sizing and animation
+    const canWrapper = document.createElement("div");
+    canWrapper.className = "water-can-wrapper";
+
+    // Create the actual jerry can element
+    const waterCan = document.createElement("div");
+    waterCan.className = "water-can";
+
+    // When the player clicks the jerry can
+    waterCan.addEventListener("click", function () {
+      // Stop if the game is not active
+      if (!gameActive) return;
+
+      // Add 1 point
+      currentCans++;
+
+      // Update the score on the screen
+      currentCansDisplay.textContent = currentCans;
+
+      // Show a random positive message
+      showMessage(getRandomMessage(echoMessages), "success");
+
+      // Remove the clicked item
+      randomCell.innerHTML = "";
+
+      // Check if the player has won
+      if (currentCans >= GOAL_CANS) {
+        endGame();
+      } else {
+        // Spawn another item right away
+        spawnItem();
+      }
+    });
+
+    // Put the jerry can inside the wrapper
+    canWrapper.appendChild(waterCan);
+
+    // Put the wrapper inside the random grid cell
+    randomCell.appendChild(canWrapper);
+  }
+  // If the random item is polluted water
+  else {
+    // Create polluted water element
+    const polluted = document.createElement("div");
+    polluted.className = "polluted-water";
+
+    // Skull symbol makes it clear this is dangerous
+    polluted.textContent = "☠";
+
+    // When the player clicks polluted water
+    polluted.addEventListener("click", function () {
+      // Stop if the game is not active
+      if (!gameActive) return;
+
+      // Subtract 2 points, but do not go below 0
+      currentCans = Math.max(0, currentCans - 2);
+
+      // Update the score on the screen
+      currentCansDisplay.textContent = currentCans;
+
+      // Show a random warning message
+      showMessage(getRandomMessage(pollutedMessages), "danger");
+
+      // Remove the clicked polluted water
+      randomCell.innerHTML = "";
+
+      // Spawn another item right away
+      spawnItem();
+    });
+
+    // Put polluted water inside the random grid cell
+    randomCell.appendChild(polluted);
+  }
+}
+
+
+//   // Use a template literal to create the wrapper and water-can element
+//   randomCell.innerHTML = `
+//     <div class="water-can-wrapper">
+//       <div class="water-can"></div>
+//     </div>
+//   `;
+// }
+
+// Initializes and starts a new game
+function startGame() {
+  if (gameActive) return; // Prevent starting a new game if one is already active
+  gameActive = true;
+  createGrid(); // Set up the game grid
+  spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
 }
