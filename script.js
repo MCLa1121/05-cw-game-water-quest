@@ -277,3 +277,38 @@ function startGame() {
   // Start the countdown timer
   startTimer();
 }
+function endGame() {
+  // Stop the game
+  gameActive = false;
+
+  // Stop spawning items
+  clearInterval(spawnInterval);
+
+  // Stop the timer
+  clearInterval(timerInterval);
+
+  // Clear the grid
+  const cells = document.querySelectorAll(".grid-cell");
+  cells.forEach(function (cell) {
+    cell.innerHTML = "";
+  });
+
+  // Let the player play again
+  startButton.disabled = false;
+  startButton.textContent = "Play Again";
+
+  // If the player collected enough cans, they win
+  if (currentCans >= GOAL_CANS) {
+    showMessage(getRandomMessage(winningMessages), "success");
+
+    // LevelUp: launch celebration effect
+    launchConfetti();
+  }
+
+  // Otherwise, they lose
+  else {
+    showMessage(getRandomMessage(losingMessages), "danger");
+  }
+}
+
+
