@@ -139,3 +139,22 @@ function getRandomMessage(messages) {
   // Return the message at that random index
   return messages[randomIndex];
 }
+
+// Displays a message in the message box with appropriate styling
+function showMessage(text, type) {
+  // Change the text inside the message box
+  messageDisplay.textContent = text;
+
+  // Reset the class first
+  messageDisplay.className = "achievement";
+
+  // If it is a good message, make it green
+  if (type === "success") {
+    messageDisplay.classList.add("success");
+  }
+
+  // If it is a bad message, make it red
+  else if (type === "danger") {
+    messageDisplay.classList.add("danger");
+  }
+}
