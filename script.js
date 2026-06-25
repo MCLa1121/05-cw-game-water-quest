@@ -87,3 +87,18 @@ const losingMessages = [
   "You ran out of time before finding enough clean water.",
   "The echoes misled you. Restart and search again."
 ];
+
+// Messages shown when the player clicks a yellow jerry can
+const echoMessages = [
+  "+1 jerry can collected!",
+  "The echo guides you toward clean water.",
+  "Another can found in the dark.",
+  "Every drop counts."
+];
+
+// Messages shown when the player clicks polluted water
+const pollutedMessages = [
+  "Polluted water! -2 points.",
+  "The cave tricked you. Avoid the dark water.",
+  "Wrong echo... that was polluted."
+];
