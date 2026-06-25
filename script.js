@@ -244,7 +244,36 @@ function startTimer() {
 // Initializes and starts a new game
 function startGame() {
   if (gameActive) return; // Prevent starting a new game if one is already active
+  // gameActive = true;
+  // createGrid(); // Set up the game grid
+  // spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
+  // Reset score and timer
+  currentCans = 0;
+  timeLeft = TIME_LIMIT;
+
+  // Game is now active
   gameActive = true;
-  createGrid(); // Set up the game grid
-  spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
+
+  // Update screen values
+  currentCansDisplay.textContent = currentCans;
+  timerDisplay.textContent = timeLeft;
+
+  // Disable the start button while the game is running
+  startButton.disabled = true;
+  startButton.textContent = "Game Running...";
+
+  // Show starting message
+  showMessage("The cave whispers... find the yellow cans!", "success");
+
+  // Create a fresh grid
+  createGrid();
+
+  // Spawn the first item
+  spawnItem();
+
+  // Keep spawning items every 900 milliseconds
+  spawnInterval = setInterval(spawnItem, 900);
+
+  // Start the countdown timer
+  startTimer();
 }
