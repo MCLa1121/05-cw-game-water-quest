@@ -93,8 +93,7 @@ function createGrid() {
   }
 }
 
-// Ensure the grid is created when the page loads
-createGrid();
+
 
 function getRandomMessage(messages) {
   // Pick a random index number from the array
@@ -337,5 +336,14 @@ function resetGame() {
   // Rebuild empty grid
   createGrid();
 }
+
+// Ensure the grid is created when the page loads
+createGrid();
+
+// Start button starts the game
+startButton.addEventListener("click", startGame);
+
+// Reset button resets the game
+resetButton.addEventListener("click", resetGame);
 
 
