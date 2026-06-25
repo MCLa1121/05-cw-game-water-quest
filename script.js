@@ -217,6 +217,21 @@ function spawnItem() {
   }
 }
 
+function startTimer() {
+  timerInterval = setInterval(function () {
+    // Subtract 1 second
+    timeLeft--;
+
+    // Update timer on the screen
+    timerDisplay.textContent = timeLeft;
+
+    // If time reaches 0, end the game
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
 
 //   // Use a template literal to create the wrapper and water-can element
 //   randomCell.innerHTML = `
