@@ -311,4 +311,31 @@ function endGame() {
   }
 }
 
+function resetGame() {
+  // Stop the game
+  gameActive = false;
+
+  // Stop intervals
+  clearInterval(spawnInterval);
+  clearInterval(timerInterval);
+
+  // Reset score and timer
+  currentCans = 0;
+  timeLeft = TIME_LIMIT;
+
+  // Update screen values
+  currentCansDisplay.textContent = currentCans;
+  timerDisplay.textContent = timeLeft;
+
+  // Reset start button
+  startButton.disabled = false;
+  startButton.textContent = "Start Game";
+
+  // Reset message
+  showMessage("Press Start to enter the cave.", "");
+
+  // Rebuild empty grid
+  createGrid();
+}
+
 
