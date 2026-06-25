@@ -72,3 +72,18 @@ let spawnInterval;
 
 // Stores the interval that controls the timer
 let timerInterval;
+
+// Some messsage that shows up when the player win or lose randomly
+// Messages shown when the player wins
+const winningMessages = [
+  "You found enough clean water. The cave lets you leave.",
+  "Mission complete! The hidden water source has been found.",
+  "You followed the right echoes and collected enough water."
+];
+
+// Messages shown when the player loses
+const losingMessages = [
+  "The cave goes quiet... try again.",
+  "You ran out of time before finding enough clean water.",
+  "The echoes misled you. Restart and search again."
+];
