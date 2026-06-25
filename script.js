@@ -120,3 +120,22 @@ const resetButton = document.getElementById("reset-game");
 
 // Game grid area
 const grid = document.querySelector(".game-grid");
+
+// Creates the 3x3 game grid where items will appear
+function createGrid() {
+  const grid = document.querySelector('.game-grid');
+  grid.innerHTML = ''; // Clear any existing grid cells
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell'; // Each cell represents a grid square
+    grid.appendChild(cell);
+  }
+}
+
+function getRandomMessage(messages) {
+  // Pick a random index number from the array
+  const randomIndex = Math.floor(Math.random() * messages.length);
+
+  // Return the message at that random index
+  return messages[randomIndex];
+}
