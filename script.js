@@ -1,26 +1,31 @@
-// // Game configuration and state variables
-// const GOAL_CANS = 25;        // Total items needed to collect
-// let currentCans = 0;         // Current number of items collected
-// let gameActive = false;      // Tracks if game is currently running
-// let spawnInterval;          // Holds the interval for spawning items
+// =======================================================
+// Water Match - charity: water Memory Game Prototype
+// This file controls the game logic.
+// It handles cards, score, timer, matching, win/lose, and reset.
+// =======================================================
 
 
+// =======================================================
+// 1. Game settings
+// =======================================================
 
-// function endGame() {
-//   gameActive = false; // Mark the game as inactive
-//   clearInterval(spawnInterval); // Stop spawning water cans
-// }
+// The player has 60 seconds to match all cards
+const TIME_LIMIT = 60;
 
-// // Set up click handler for the start button
-// document.getElementById('start-game').addEventListener('click', startGame);
+// There are 8 matching pairs in the game
+const TOTAL_MATCHES = 8;
 
-//game setting 
-const GOAL_CANS = 20;
-const TIME_LIMIT = 30;
 
-//varialbe that will change during the game process 
-// Tracks how many jerry cans the player collected
-let currentCans = 0;
+// =======================================================
+// 2. Game state variables
+// These values change while the game is running.
+// =======================================================
+
+// Tracks the player's score
+let score = 0;
+
+// Tracks how many pairs the player has matched
+let matchesFound = 0;
 
 // Tracks how much time is left
 let timeLeft = TIME_LIMIT;
@@ -28,50 +33,85 @@ let timeLeft = TIME_LIMIT;
 // Tracks whether the game is currently active
 let gameActive = false;
 
-// Stores the interval that spawns items
-let spawnInterval;
+// Stores the first card the player flips
+let firstCard = null;
 
-// Stores the interval that controls the timer
+// Stores the second card the player flips
+let secondCard = null;
+
+// Stops the player from clicking more cards while the game checks a match
+let lockBoard = false;
+
+// Stores the timer interval
 let timerInterval;
 
-// Some messsage that shows up when the player win or lose randomly
-// Messages shown when the player wins
-const winningMessages = [
-  "You found enough clean water. The cave lets you leave.",
-  "Mission complete! The hidden water source has been found.",
-  "You followed the right echoes and collected enough water."
+
+// =======================================================
+// 3. Card data
+// Each object represents one card type.
+// We duplicate these later to create pairs.
+// =======================================================
+
+const cardTypes = [
+  {
+    name: "Jerry Can",
+    type: "image",
+    value: "img/water-can-transparent.png"
+  },
+  {
+    name: "Clean Water",
+    type: "emoji",
+    value: "💧"
+  },
+  {
+    name: "Well",
+    type: "emoji",
+    value: "🪣"
+  },
+  {
+    name: "Community",
+    type: "emoji",
+    value: "🤝"
+  },
+  {
+    name: "Globe",
+    type: "emoji",
+    value: "🌍"
+  },
+  {
+    name: "Sparkle",
+    type: "emoji",
+    value: "✨"
+  },
+  {
+    name: "Home",
+    type: "emoji",
+    value: "🏠"
+  },
+  {
+    name: "Heart",
+    type: "emoji",
+    value: "💛"
+  }
 ];
 
-// Messages shown when the player loses
-const losingMessages = [
-  "The cave goes quiet... try again.",
-  "You ran out of time before finding enough clean water.",
-  "The echoes misled you. Restart and search again."
-];
 
-// Messages shown when the player clicks a yellow jerry can
-const echoMessages = [
-  "+1 jerry can collected!",
-  "The echo guides you toward clean water.",
-  "Another can found in the dark.",
-  "Every drop counts."
-];
-
-// Messages shown when the player clicks polluted water
-const pollutedMessages = [
-  "Polluted water! -2 points.",
-  "The cave tricked you. Avoid the dark water.",
-  "Wrong echo... that was polluted."
-];
+// =======================================================
+// 4. Grab HTML elements
+// These connect JavaScript to the HTML page.
+// =======================================================
 
 // Score display
-const currentCansDisplay = document.getElementById("current-cans");
+const scoreDisplay = document.getElementById("score");
+
+// Matches display
+const matchesDisplay = document.getElementById("matches");
 
 // Timer display
 const timerDisplay = document.getElementById("timer");
 
 // Message display
-const messageDisplay = document.getElementById("achievements");
+const messageDisplay = document.getElementById("message");
 
 // Start button
 const startButton = document.getElementById("start-game");
@@ -79,271 +119,439 @@ const startButton = document.getElementById("start-game");
 // Reset button
 const resetButton = document.getElementById("reset-game");
 
-// Game grid area
-const grid = document.querySelector(".game-grid");
-
-// Creates the 3x3 game grid where items will appear
-function createGrid() {
-  const grid = document.querySelector('.game-grid');
-  grid.innerHTML = ''; // Clear any existing grid cells
-  for (let i = 0; i < 9; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'grid-cell'; // Each cell represents a grid square
-    grid.appendChild(cell);
-  }
-}
+// Memory card grid
+const memoryGrid = document.getElementById("memory-grid");
 
 
+// =======================================================
+// 5. Show a message on the page
+// The type changes the color of the message.
+// =======================================================
 
-function getRandomMessage(messages) {
-  // Pick a random index number from the array
-  const randomIndex = Math.floor(Math.random() * messages.length);
-
-  // Return the message at that random index
-  return messages[randomIndex];
-}
-
-// Displays a message in the message box with appropriate styling
 function showMessage(text, type) {
-  // Change the text inside the message box
+  // Change message text
   messageDisplay.textContent = text;
 
-  // Reset the class first
-  messageDisplay.className = "achievement";
+  // Reset message class
+  messageDisplay.className = "message";
 
-  // If it is a good message, make it green
+  // Green message
   if (type === "success") {
     messageDisplay.classList.add("success");
   }
 
-  // If it is a bad message, make it red
+  // Red message
   else if (type === "danger") {
     messageDisplay.classList.add("danger");
   }
 }
 
-// Spawns a new item in a random grid cell
-function spawnItem() {
-  if (!gameActive) return; // Stop if the game is not active
-  const cells = document.querySelectorAll('.grid-cell');
-  
-  // Clear all cells before spawning a new water can
-  cells.forEach(cell => (cell.innerHTML = ''));
 
-  // Select a random cell from the grid to place the water can
-  const randomCell = cells[Math.floor(Math.random() * cells.length)];
+// =======================================================
+// 6. Shuffle cards
+// This randomizes the order of the cards.
+// =======================================================
 
-  // 75% chance to spawn a jerry can
-  // 25% chance to spawn polluted water
-  const itemType = Math.random() < 0.75 ? "can" : "polluted";
+function shuffleCards(cards) {
+  // Loop backward through the array
+  for (let i = cards.length - 1; i > 0; i--) {
+    // Pick a random index
+    const randomIndex = Math.floor(Math.random() * (i + 1));
 
-
- 
-  // If the random item is a yellow jerry can
-  if (itemType === "can") {
-    // Create a wrapper for sizing and animation
-    const canWrapper = document.createElement("div");
-    canWrapper.className = "water-can-wrapper";
-
-    // Create the actual jerry can element
-    const waterCan = document.createElement("div");
-    waterCan.className = "water-can";
-
-    // When the player clicks the jerry can
-    waterCan.addEventListener("click", function () {
-      // Stop if the game is not active
-      if (!gameActive) return;
-
-      // Add 1 point
-      currentCans++;
-
-      // Update the score on the screen
-      currentCansDisplay.textContent = currentCans;
-
-      // Show a random positive message
-      showMessage(getRandomMessage(echoMessages), "success");
-
-      // Remove the clicked item
-      randomCell.innerHTML = "";
-
-      // Check if the player has won
-      if (currentCans >= GOAL_CANS) {
-        endGame();
-      } else {
-        // Spawn another item right away
-        spawnItem();
-      }
-    });
-
-    // Put the jerry can inside the wrapper
-    canWrapper.appendChild(waterCan);
-
-    // Put the wrapper inside the random grid cell
-    randomCell.appendChild(canWrapper);
+    // Swap the current card with the random card
+    const temp = cards[i];
+    cards[i] = cards[randomIndex];
+    cards[randomIndex] = temp;
   }
-  // If the random item is polluted water
+
+  // Return the shuffled cards
+  return cards;
+}
+
+
+// =======================================================
+// 7. Create the card HTML
+// This function builds one card.
+// =======================================================
+
+function createCard(cardInfo) {
+  // Create a button for the card
+  const card = document.createElement("button");
+
+  // Add CSS class
+  card.className = "card";
+
+  // Store the card name in a data attribute
+  // This helps us check if two cards match
+  card.dataset.name = cardInfo.name;
+
+  // Create the inside of the card
+  const cardInner = document.createElement("div");
+  cardInner.className = "card-inner";
+
+  // Create the front side of the card
+  const cardFront = document.createElement("div");
+  cardFront.className = "card-front";
+  cardFront.textContent = "?";
+
+  // Create the back side of the card
+  const cardBack = document.createElement("div");
+  cardBack.className = "card-back";
+
+  // If this card uses an image, create an img tag
+  if (cardInfo.type === "image") {
+    const img = document.createElement("img");
+    img.src = cardInfo.value;
+    img.alt = cardInfo.name;
+    cardBack.appendChild(img);
+  }
+
+  // Otherwise, use an emoji
   else {
-    // Create polluted water element
-    const polluted = document.createElement("div");
-    polluted.className = "polluted-water";
+    cardBack.textContent = cardInfo.value;
+  }
 
-    // Skull symbol makes it clear this is dangerous
-    polluted.textContent = "☠";
+  // Put front and back inside the card inner
+  cardInner.appendChild(cardFront);
+  cardInner.appendChild(cardBack);
 
-    // When the player clicks polluted water
-    polluted.addEventListener("click", function () {
-      // Stop if the game is not active
-      if (!gameActive) return;
+  // Put card inner inside the card button
+  card.appendChild(cardInner);
 
-      // Subtract 2 points, but do not go below 0
-      currentCans = Math.max(0, currentCans - 2);
+  // When the player clicks a card, flip it
+  card.addEventListener("click", function () {
+    flipCard(card);
+  });
 
-      // Update the score on the screen
-      currentCansDisplay.textContent = currentCans;
+  // Return the finished card
+  return card;
+}
 
-      // Show a random warning message
-      showMessage(getRandomMessage(pollutedMessages), "danger");
 
-      // Remove the clicked polluted water
-      randomCell.innerHTML = "";
+// =======================================================
+// 8. Create the board
+// This duplicates the cards, shuffles them, and displays them.
+// =======================================================
 
-      // Spawn another item right away
-      spawnItem();
-    });
+function createBoard() {
+  // Clear the board first
+  memoryGrid.innerHTML = "";
 
-    // Put polluted water inside the random grid cell
-    randomCell.appendChild(polluted);
+  // Make pairs by duplicating the cardTypes array
+  const cardPairs = [...cardTypes, ...cardTypes];
+
+  // Shuffle the paired cards
+  const shuffledCards = shuffleCards(cardPairs);
+
+  // Create and add each card to the grid
+  shuffledCards.forEach(function (cardInfo) {
+    const card = createCard(cardInfo);
+    memoryGrid.appendChild(card);
+  });
+}
+
+
+// =======================================================
+// 9. Flip a card
+// This runs when the player clicks a card.
+// =======================================================
+
+function flipCard(card) {
+  // Do nothing if the game has not started
+  if (!gameActive) {
+    showMessage("Press Start before flipping cards.", "danger");
+    return;
+  }
+
+  // Do nothing if board is locked
+  if (lockBoard) return;
+
+  // Do nothing if player clicks the same card twice
+  if (card === firstCard) return;
+
+  // Do nothing if card is already matched
+  if (card.classList.contains("matched")) return;
+
+  // Flip the card visually
+  card.classList.add("flipped");
+
+  // If this is the first card flipped, save it
+  if (firstCard === null) {
+    firstCard = card;
+    return;
+  }
+
+  // Otherwise, this is the second card
+  secondCard = card;
+
+  // Lock the board while checking
+  lockBoard = true;
+
+  // Check whether the two cards match
+  checkForMatch();
+}
+
+
+// =======================================================
+// 10. Check for a match
+// This compares the two flipped cards.
+// =======================================================
+
+function checkForMatch() {
+  // Compare the data-name values
+  const isMatch = firstCard.dataset.name === secondCard.dataset.name;
+
+  // If they match, keep them flipped
+  if (isMatch) {
+    handleMatch();
+  }
+
+  // If they do not match, flip them back
+  else {
+    handleWrongMatch();
   }
 }
 
+
+// =======================================================
+// 11. Handle a correct match
+// =======================================================
+
+function handleMatch() {
+  // Mark both cards as matched
+  firstCard.classList.add("matched");
+  secondCard.classList.add("matched");
+
+  // Add 2 points
+  score += 2;
+
+  // Add 1 to matches found
+  matchesFound++;
+
+  // Update score and matches on the screen
+  scoreDisplay.textContent = score;
+  matchesDisplay.textContent = matchesFound;
+
+  // Show feedback
+  showMessage("Match found! Clean water progress grows.", "success");
+
+  // Reset selected cards
+  resetSelectedCards();
+
+  // Check if the player matched all pairs
+  if (matchesFound === TOTAL_MATCHES) {
+    endGame(true);
+  }
+}
+
+
+// =======================================================
+// 12. Handle a wrong match
+// This is the LevelUp challenge: wrong match reduces score.
+// =======================================================
+
+function handleWrongMatch() {
+  // Subtract 1 point, but do not go below 0
+  score = Math.max(0, score - 1);
+
+  // Update score on the screen
+  scoreDisplay.textContent = score;
+
+  // Show feedback
+  showMessage("Not a match. Try again! -1 point.", "danger");
+
+  // Wait a little before flipping the cards back
+  setTimeout(function () {
+    firstCard.classList.remove("flipped");
+    secondCard.classList.remove("flipped");
+
+    // Reset selected cards after they flip back
+    resetSelectedCards();
+  }, 800);
+}
+
+
+// =======================================================
+// 13. Reset selected cards
+// This clears firstCard and secondCard.
+// =======================================================
+
+function resetSelectedCards() {
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+}
+
+
+// =======================================================
+// 14. Start the timer
+// Counts down every second.
+// =======================================================
+
 function startTimer() {
   timerInterval = setInterval(function () {
-    // Subtract 1 second
+    // Subtract one second
     timeLeft--;
 
-    // Update timer on the screen
+    // Update timer display
     timerDisplay.textContent = timeLeft;
 
-    // If time reaches 0, end the game
+    // If time runs out, player loses
     if (timeLeft <= 0) {
-      endGame();
+      endGame(false);
     }
   }, 1000);
 }
 
 
-//   // Use a template literal to create the wrapper and water-can element
-//   randomCell.innerHTML = `
-//     <div class="water-can-wrapper">
-//       <div class="water-can"></div>
-//     </div>
-//   `;
-// }
+// =======================================================
+// 15. Start the game
+// =======================================================
 
-// Initializes and starts a new game
 function startGame() {
-  if (gameActive) return; // Prevent starting a new game if one is already active
-  // gameActive = true;
-  // createGrid(); // Set up the game grid
-  // spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
-  // Reset score and timer
-  currentCans = 0;
-  timeLeft = TIME_LIMIT;
+  // Prevent starting again while game is active
+  if (gameActive) return;
 
-  // Game is now active
+  // Reset game values
+  score = 0;
+  matchesFound = 0;
+  timeLeft = TIME_LIMIT;
   gameActive = true;
 
-  // Update screen values
-  currentCansDisplay.textContent = currentCans;
+  // Reset selected cards
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+
+  // Update the screen
+  scoreDisplay.textContent = score;
+  matchesDisplay.textContent = matchesFound;
   timerDisplay.textContent = timeLeft;
 
-  // Disable the start button while the game is running
+  // Create a fresh board
+  createBoard();
+
+  // Update buttons
   startButton.disabled = true;
   startButton.textContent = "Game Running...";
 
   // Show starting message
-  showMessage("The cave whispers... find the yellow cans!", "success");
+  showMessage("Game started! Find the matching pairs.", "success");
 
-  // Create a fresh grid
-  createGrid();
-
-  // Spawn the first item
-  spawnItem();
-
-  // Keep spawning items every 900 milliseconds
-  spawnInterval = setInterval(spawnItem, 900);
-
-  // Start the countdown timer
+  // Start countdown timer
   startTimer();
 }
-function endGame() {
-  // Stop the game
-  gameActive = false;
 
-  // Stop spawning items
-  clearInterval(spawnInterval);
+
+// =======================================================
+// 16. End the game
+// won is true if the player wins, false if player loses.
+// =======================================================
+
+function endGame(won) {
+  // Stop game activity
+  gameActive = false;
 
   // Stop the timer
   clearInterval(timerInterval);
 
-  // Clear the grid
-  const cells = document.querySelectorAll(".grid-cell");
-  cells.forEach(function (cell) {
-    cell.innerHTML = "";
-  });
-
-  // Let the player play again
+  // Unlock the start button
   startButton.disabled = false;
   startButton.textContent = "Play Again";
 
-  // If the player collected enough cans, they win
-  if (currentCans >= GOAL_CANS) {
-    showMessage(getRandomMessage(winningMessages), "success");
-
-    // LevelUp: launch celebration effect
+  // If player won
+  if (won) {
+    showMessage("You matched every pair! Clean water mission complete!", "success");
     launchConfetti();
   }
 
-  // Otherwise, they lose
+  // If player lost
   else {
-    showMessage(getRandomMessage(losingMessages), "danger");
+    showMessage("Time is up! Try again and match more pairs.", "danger");
   }
 }
 
+
+// =======================================================
+// 17. Reset the game
+// =======================================================
+
 function resetGame() {
-  // Stop the game
+  // Stop game activity
   gameActive = false;
 
-  // Stop intervals
-  clearInterval(spawnInterval);
+  // Stop timer
   clearInterval(timerInterval);
 
-  // Reset score and timer
-  currentCans = 0;
+  // Reset values
+  score = 0;
+  matchesFound = 0;
   timeLeft = TIME_LIMIT;
 
-  // Update screen values
-  currentCansDisplay.textContent = currentCans;
+  // Reset selected cards
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+
+  // Update screen
+  scoreDisplay.textContent = score;
+  matchesDisplay.textContent = matchesFound;
   timerDisplay.textContent = timeLeft;
 
-  // Reset start button
+  // Reset buttons
   startButton.disabled = false;
   startButton.textContent = "Start Game";
 
-  // Reset message
-  showMessage("Press Start to enter the cave.", "");
+  // Create a new face-down board
+  createBoard();
 
-  // Rebuild empty grid
-  createGrid();
+  // Show reset message
+  showMessage("Game reset. Press Start to begin.", "");
 }
 
-// Ensure the grid is created when the page loads
-createGrid();
+
+// =======================================================
+// 18. Confetti celebration
+// This creates falling water drops when the player wins.
+// =======================================================
+
+function launchConfetti() {
+  // Create 30 water drops
+  for (let i = 0; i < 30; i++) {
+    const confetti = document.createElement("div");
+
+    // Add class for CSS animation
+    confetti.className = "confetti";
+
+    // Use a water drop emoji
+    confetti.textContent = "💧";
+
+    // Random left position
+    confetti.style.left = Math.random() * 100 + "vw";
+
+    // Random delay
+    confetti.style.animationDelay = Math.random() * 1 + "s";
+
+    // Add to page
+    document.body.appendChild(confetti);
+
+    // Remove after animation finishes
+    setTimeout(function () {
+      confetti.remove();
+    }, 3000);
+  }
+}
+
+
+// =======================================================
+// 19. Set up page when it first loads
+// =======================================================
+
+// Create the board immediately
+createBoard();
 
 // Start button starts the game
 startButton.addEventListener("click", startGame);
 
 // Reset button resets the game
 resetButton.addEventListener("click", resetGame);
-
-
